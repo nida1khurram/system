@@ -5,7 +5,9 @@ from typing import Optional
 from database import get_db
 from models import User, UserRole, Admin, Parent, School, SchoolSettings
 from schemas import LoginRequest, RegisterRequest, TokenResponse
-from auth import verify_password, hash_password, create_access_token
+from auth import verify_password, hash_password, create_access_token, decode_token, get_current_user, add_token_to_blacklist, bearer_scheme
+from fastapi.security import HTTPAuthorizationCredentials
+from datetime import datetime, timedelta
 import time
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -200,5 +202,14 @@ def register_school(body: RegisterSchoolRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout():
+def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    token = credentials.credentials
+    payload = decode_token(token)
+    exp = payload.get("exp")
+    expires_at = datetime.utcfromtimestamp(exp) if exp else datetime.utcnow() + timedelta(hours=1)
+    add_token_to_blacklist(db, token, current_user["user_id"], expires_at)
     return {"success": True, "message": "Logged out"}

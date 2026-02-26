@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from config import settings
 from sqlalchemy.orm import Session
+from database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -29,13 +30,31 @@ def decode_token(token: str) -> dict:
     except JWTError:
         return {}
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+def add_token_to_blacklist(db: Session, token: str, user_id: int, expires_at: datetime):
+    from models import TokenBlacklist
+    entry = TokenBlacklist(token=token, user_id=user_id, expires_at=expires_at)
+    db.add(entry)
+    db.commit()
+
+
+def is_token_blacklisted(db: Session, token: str) -> bool:
+    from models import TokenBlacklist
+    return db.query(TokenBlacklist).filter(TokenBlacklist.token == token).first() is not None
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+):
     if not credentials:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     payload = decode_token(credentials.credentials)
     if not payload.get("user_id"):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    if is_token_blacklisted(db, credentials.credentials):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
 
     return payload
 

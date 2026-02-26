@@ -71,7 +71,7 @@ async def startup_migrate():
     """Add missing columns and backfill existing rows."""
     from database import engine
     from models import Student
-    from models.models import Base, Homework as _HW, School as _School
+    from models.models import Base, Homework as _HW, School as _School, TokenBlacklist as _TB
 
     with engine.connect() as conn:
         # ── Create schools table (new) ─────────────────────────────────
@@ -83,6 +83,19 @@ async def startup_migrate():
         # homeworks table — use SQLAlchemy ORM to handle dialect differences
         try:
             Base.metadata.create_all(engine, tables=[_HW.__table__], checkfirst=True)
+        except Exception:
+            pass
+
+        # token_blacklist table
+        try:
+            Base.metadata.create_all(engine, tables=[_TB.__table__], checkfirst=True)
+        except Exception:
+            pass
+
+        # Cleanup expired tokens on every startup
+        try:
+            conn.execute(text("DELETE FROM token_blacklist WHERE expires_at < NOW()"))
+            conn.commit()
         except Exception:
             pass
 
