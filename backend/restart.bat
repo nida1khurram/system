@@ -1,0 +1,9 @@
+@echo off
+echo Stopping all Python processes on port 8000...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8000') do (
+    taskkill /PID %%a /F 2>nul
+)
+echo Waiting for port to free up...
+timeout /t 3 /nobreak >nul
+echo Starting backend server...
+uvicorn main:app --reload --host 0.0.0.0 --port 8000

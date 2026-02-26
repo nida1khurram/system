@@ -1,0 +1,13 @@
+{
+  "name": "school-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["frontend"],
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && python main.py",
+    "install:frontend": "cd frontend && npm install",
+    "test": "cd frontend && npm test"
+  },
+  "description": "School Management System - Next.js Frontend + Python FastAPI Backend"
+}

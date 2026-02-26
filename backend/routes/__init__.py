@@ -1,0 +1,14 @@
+from .auth import router as auth_router
+from .students import router as students_router
+from .fees import router as fees_router
+from .payments import router as payments_router
+from .attendance import router as attendance_router
+from .marks import router as marks_router
+from .messages import router as messages_router
+from .classes import router as classes_router
+from .teachers import router as teachers_router
+from .users import router as users_router
+from .admins import router as admins_router
+from .settings import router as settings_router
+from .homework import router as homework_router
+from .schools import router as schools_router
