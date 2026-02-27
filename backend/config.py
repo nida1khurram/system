@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     APP_URL: str = "http://localhost:8000"
     FRONTEND_URL: str = "http://localhost:3000"
+    # Comma-separated extra origins, e.g. Vercel URL: https://myapp.vercel.app
+    EXTRA_ALLOWED_ORIGINS: str = "https://system-frontend-mocha.vercel.app/"
 
     class Config:
         env_file = ".env"
